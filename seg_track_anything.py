@@ -222,11 +222,12 @@ def video_type_input_tracking(SegTracker, input_video, io_args, video_name, fram
     os.system(f"zip -r {io_args['tracking_result_dir']}/{video_name}_pred_mask.zip {io_args['output_mask_dir']}")
 
     # manually release memory (after cuda out of memory)
+    obj_list = SegTracker.reference_objs_list
     del SegTracker
     torch.cuda.empty_cache()
     gc.collect()
 
-    return io_args['output_video'], f"{io_args['tracking_result_dir']}/{video_name}_pred_mask.zip"
+    return io_args['output_video'], f"{io_args['tracking_result_dir']}/{video_name}_pred_mask.zip", obj_list
 
 
 def img_seq_type_input_tracking(SegTracker, io_args, video_name, imgs_path, fps, frame_num=0):
@@ -343,4 +344,5 @@ def img_seq_type_input_tracking(SegTracker, io_args, video_name, imgs_path, fps,
     gc.collect()
 
 
-    return io_args['output_video'], f"{io_args['tracking_result_dir']}/{video_name}_pred_mask.zip"
+    return io_args['output_video'], f"{io_args['tracking_result_dir']}/{video_name}_pred_mask.zip", \
+        SegTracker.reference_objs_list
