@@ -108,6 +108,12 @@ def video_type_input_tracking(SegTracker, input_video, io_args, video_name, fram
     # source video to segment
     cap = cv2.VideoCapture(input_video)
     fps = cap.get(cv2.CAP_PROP_FPS)
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    num_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+    out = cv2.VideoWriter(io_args['output_video'], fourcc, fps, (width, height))
 
     if frame_num > 0:
         output_mask_name = sorted([img_name for img_name in os.listdir(io_args['output_mask_dir'])])
@@ -158,74 +164,45 @@ def video_type_input_tracking(SegTracker, input_video, io_args, video_name, fram
                 SegTracker.add_reference(frame, pred_mask)
             else:
                 pred_mask = SegTracker.track(frame,update_memory=True)
+
+            masked_frame = draw_mask(frame, pred_mask)
+            cv2.imwrite(f"{io_args['output_masked_frame_dir']}/{str(frame_idx).zfill(5)}.png", masked_frame[:, :, ::-1])
+
+            masked_pred_list.append(masked_frame)
+            masked_frame = cv2.cvtColor(masked_frame, cv2.COLOR_RGB2BGR)
+            out.write(masked_frame)
+            print('frame {} writed'.format(frame_idx), end='\r')
+            frame_idx += 1
+
             torch.cuda.empty_cache()
             gc.collect()
-            
+
+
             save_prediction(pred_mask, output_mask_dir, str(frame_idx + frame_num).zfill(5) + '.png')
             pred_list.append(pred_mask)
 
             print("processed frame {}, obj_num {}".format(frame_idx + frame_num, SegTracker.get_obj_num()),end='\r')
             frame_idx += 1
         cap.release()
+        out.release()
+        print("\n{} saved".format(io_args['output_video']))
+        print('\nfinished')
+
+        # save colorized masks as a gif
+        imageio.mimsave(io_args['output_gif'], masked_pred_list, fps=fps)
+        print("{} saved".format(io_args['output_gif']))
+
+        # zip predicted mask
+        os.system(f"zip -r {io_args['tracking_result_dir']}/{video_name}_pred_mask.zip {io_args['output_mask_dir']}")
+
+        # manually release memory (after cuda out of memory)
+        obj_list = SegTracker.reference_objs_list
+        del SegTracker
+        torch.cuda.empty_cache()
+        gc.collect()
         print('\nfinished')
     
-    ##################
-    # Visualization
-    ##################
 
-    # draw pred mask on frame and save as a video
-    cap = cv2.VideoCapture(input_video)
-    # if frame_num > 0:
-    #     for i in range(0, frame_num):
-    #         cap.read()  
-    fps = cap.get(cv2.CAP_PROP_FPS)
-    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    num_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-
-    fourcc =  cv2.VideoWriter_fourcc(*"mp4v")
-    # if input_video[-3:]=='mp4':
-    #     fourcc =  cv2.VideoWriter_fourcc(*"mp4v")
-    # elif input_video[-3:] == 'avi':
-    #     fourcc =  cv2.VideoWriter_fourcc(*"MJPG")
-    #     # fourcc = cv2.VideoWriter_fourcc(*"XVID")
-    # else:
-    #     fourcc = int(cap.get(cv2.CAP_PROP_FOURCC))
-    out = cv2.VideoWriter(io_args['output_video'], fourcc, fps, (width, height))
-
-    frame_idx = 0
-    while cap.isOpened():
-        ret, frame = cap.read()
-        if not ret:
-            break
-
-        frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
-        pred_mask = pred_list[frame_idx]
-        masked_frame = draw_mask(frame, pred_mask)
-        cv2.imwrite(f"{io_args['output_masked_frame_dir']}/{str(frame_idx).zfill(5)}.png", masked_frame[:, :, ::-1])
-
-        masked_pred_list.append(masked_frame)
-        masked_frame = cv2.cvtColor(masked_frame,cv2.COLOR_RGB2BGR)
-        out.write(masked_frame)
-        print('frame {} writed'.format(frame_idx),end='\r')
-        frame_idx += 1
-    out.release()
-    cap.release()
-    print("\n{} saved".format(io_args['output_video']))
-    print('\nfinished')
-
-    # save colorized masks as a gif
-    imageio.mimsave(io_args['output_gif'], masked_pred_list, fps=fps)
-    print("{} saved".format(io_args['output_gif']))
-
-    # zip predicted mask
-    os.system(f"zip -r {io_args['tracking_result_dir']}/{video_name}_pred_mask.zip {io_args['output_mask_dir']}")
-
-    # manually release memory (after cuda out of memory)
-    obj_list = SegTracker.reference_objs_list
-    del SegTracker
-    torch.cuda.empty_cache()
-    gc.collect()
 
     return io_args['output_video'], f"{io_args['tracking_result_dir']}/{video_name}_pred_mask.zip", obj_list
 
