@@ -34,44 +34,6 @@ class SegTracker():
         self.everything_labels = []
         print("SegTracker has been initialized")
 
-    def seg(self,frame):
-        '''
-        Arguments:
-            frame: numpy array (h,w,3)
-        Return:
-            origin_merged_mask: numpy array (h,w)
-        '''
-        frame = frame[:, :, ::-1]
-        anns = self.sam.everything_generator.generate(frame)
-
-        # anns is a list recording all predictions in an image
-        if len(anns) == 0:
-            return
-        # merge all predictions into one mask (h,w)
-        # note that the merged mask may lost some objects due to the overlapping
-        self.origin_merged_mask = np.zeros(anns[0]['segmentation'].shape,dtype=np.uint8)
-        idx = 1
-        for ann in anns:
-            if ann['area'] > self.min_area:
-                m = ann['segmentation']
-                self.origin_merged_mask[m==1] = idx
-                idx += 1
-                self.everything_points.append(ann["point_coords"][0])
-                self.everything_labels.append(1)
-
-        obj_ids = np.unique(self.origin_merged_mask)
-        obj_ids = obj_ids[obj_ids!=0]
-
-        self.object_idx = 1
-        for id in obj_ids:
-            if np.sum(self.origin_merged_mask==id) < self.min_area or self.object_idx > self.max_obj_num:
-                self.origin_merged_mask[self.origin_merged_mask==id] = 0
-            else:
-                self.origin_merged_mask[self.origin_merged_mask==id] = self.object_idx
-                self.object_idx += 1
-
-        self.first_frame_mask = self.origin_merged_mask
-        return self.origin_merged_mask
 
     def update_origin_merged_mask(self, updated_merged_mask):
         self.origin_merged_mask = updated_merged_mask
@@ -92,8 +54,8 @@ class SegTracker():
         '''
         self.reference_objs_list.append(np.unique(mask))
         self.curr_idx = self.get_obj_num()
-        self.tracker.add_reference_frame(frame,mask, self.curr_idx, frame_step)
 
+        self.tracker.add_reference_frame(frame,mask, self.curr_idx, frame_step)
     def track(self,frame,update_memory=False):
         '''
         Track all known objects.
@@ -215,7 +177,45 @@ class SegTracker():
         refined_merged_mask[interactive_mask > 0] = self.curr_idx
 
         return refined_merged_mask
-    
+    def seg(self,frame):
+        '''
+        Arguments:
+            frame: numpy array (h,w,3)
+        Return:
+            origin_merged_mask: numpy array (h,w)
+        '''
+        frame = frame[:, :, ::-1]
+        anns = self.sam.everything_generator.generate(frame)
+
+        # anns is a list recording all predictions in an image
+        if len(anns) == 0:
+            return
+        # merge all predictions into one mask (h,w)
+        # note that the merged mask may lost some objects due to the overlapping
+        self.origin_merged_mask = np.zeros(anns[0]['segmentation'].shape,dtype=np.uint8)
+        idx = 1
+        for ann in anns:
+            if ann['area'] > self.min_area:
+                m = ann['segmentation']
+                self.origin_merged_mask[m==1] = idx
+                idx += 1
+                self.everything_points.append(ann["point_coords"][0])
+                self.everything_labels.append(1)
+
+        obj_ids = np.unique(self.origin_merged_mask)
+        obj_ids = obj_ids[obj_ids!=0]
+
+        self.object_idx = 1
+        for id in obj_ids:
+            if np.sum(self.origin_merged_mask==id) < self.min_area or self.object_idx > self.max_obj_num:
+                self.origin_merged_mask[self.origin_merged_mask==id] = 0
+            else:
+                self.origin_merged_mask[self.origin_merged_mask==id] = self.object_idx
+                self.object_idx += 1
+
+        self.first_frame_mask = self.origin_merged_mask
+        return self.origin_merged_mask
+
     def detect_and_seg(self, origin_frame: np.ndarray, grounding_caption, box_threshold, text_threshold, box_size_threshold=1, reset_image=False):
         '''
         Using Grounding-DINO to detect object acc Text-prompts
