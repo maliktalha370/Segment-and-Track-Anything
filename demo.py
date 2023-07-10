@@ -13,7 +13,6 @@ from app import (
     tracking_objects
 )
 
-
 def colorize_mask(pred_mask):
     save_mask = Image.fromarray(pred_mask.astype(np.uint8))
     save_mask = save_mask.convert(mode='P')
@@ -65,6 +64,9 @@ def gd_detect(Seg_Tracker, origin_frame, grounding_caption='people', box_thresho
     masked_frame = draw_mask(annotated_frame, predicted_mask)
 
     return Seg_Tracker, masked_frame, origin_frame
+
+
+
 
 
 video_name = 'cctv_cut'

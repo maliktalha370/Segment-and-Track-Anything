@@ -12,3 +12,5 @@ cym_utils
 /aot/results
 /aot/pretrain_models
 /aot/datasets
+.idea/
+gdrive/.idea/
