@@ -75,7 +75,7 @@ class VideoDownloader:
         self.data_file_path = os.path.join('gdrive', data_file_path)
         self.drive = self.authenticate()
         self.segmenter_obj = Segmenter_Tracker()
-        self.video_directory = 'gdrive/downloaded_videos'
+        self.video_directory = './gdrive/downloaded_videos'
         self.gdrive_folder = "Tracking"
         self.grounding_caption = 'people'
 
@@ -133,7 +133,7 @@ class VideoDownloader:
         new_videos = []
         if recent_videos:
             for video in recent_videos:
-                file_path = os.path.join('downloaded_videos', video['title'])
+                file_path = os.path.join(self.video_directory, video['title'])
                 if self.check_text_file(video['title']):
                     video.GetContentFile(file_path)
                     new_videos.append(video['title'])
@@ -159,16 +159,16 @@ class VideoDownloader:
     def run_process(self, video_file):
         print(f"Running process for video: {video_file}")
         io_args = {
-            'input_video': f'./{self.video_directory}/{video_file}.mp4',
-            'output_mask_dir': f'./{self.video_directory}/{video_file}_masks',  # save pred masks
-            'output_video': f'./{self.video_directory}/{video_file}_seg.mp4',
-            'output_gif': f'./{self.video_directory}/{video_file}_seg.gif',  # mask visualization
+            'input_video': f'{self.video_directory}/{video_file}.mp4',
+            'output_mask_dir': f'{self.video_directory}/{video_file}_masks',  # save pred masks
+            'output_video': f'{self.video_directory}/{video_file}_seg.mp4',
+            'output_gif': f'{self.video_directory}/{video_file}_seg.gif',  # mask visualization
         }
         input_first_frame, origin_frame, drawing_board, grounding_caption = get_meta_from_video(io_args['input_video'])
         Seg_Tracker, _, _, _ = init_SegTracker(self.aot_model, self.long_term_mem, self.max_len_long_term, self.sam_gap,
                                                self.max_obj_num,
                                                self.points_per_side, origin_frame)
-        Seg_Tracker, input_first_frame, _ = self.gd_detect(Seg_Tracker, origin_frame, self.grounding_caption,
+        Seg_Tracker, input_first_frame, _ = self.segmenter_obj.gd_detect(Seg_Tracker, origin_frame, self.grounding_caption,
                                                            self.box_threshold, self.text_threshold,
                                                            self.aot_model, self.long_term_mem, self.max_len_long_term,
                                                            self.sam_gap, self.max_obj_num,
@@ -181,8 +181,7 @@ class VideoDownloader:
 
     def check_for_new_videos(self, new_videos):
         for new_video in new_videos:
-            downloaded_videos = os.path.join(self.video_directory, new_video)
-            self.run_process(downloaded_videos)
+            self.run_process(new_video.split('.')[0])
 
     def job(self):
         print("Scanning for recent videos...")
@@ -191,10 +190,10 @@ class VideoDownloader:
 
 # Create an instance of VideoDownloader
 data_file_path = 'already_looked_files.txt'
-video_downloader = VideoDownloader()
+video_downloader = VideoDownloader(data_file_path)
 
 # Schedule the job to run every 1 hour
-schedule.every(5).minutes.do(video_downloader.job)
+schedule.every(1).minutes.do(video_downloader.job)
 
 while True:
     schedule.run_pending()
