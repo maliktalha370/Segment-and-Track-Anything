@@ -46,7 +46,7 @@ def get_click_prompt(click_stack, point):
 
 
 def get_meta_from_video(input_video):
-    print('Function Name :', inspect.stack()[0][3])
+    # print('Function Name :', inspect.stack()[0][3])
     if input_video is None:
         return None, None, None, ""
 
@@ -85,7 +85,7 @@ def get_meta_from_img_seq(input_img_seq):
 
 
 def SegTracker_add_first_frame(Seg_Tracker, origin_frame, predicted_mask):
-    print('Function Name :', inspect.stack()[0][3])
+    # print('Function Name :', inspect.stack()[0][3])
     with torch.cuda.amp.autocast():
         # Reset the first frame's mask
         frame_idx = 0
@@ -97,7 +97,7 @@ def SegTracker_add_first_frame(Seg_Tracker, origin_frame, predicted_mask):
 
 
 def init_SegTracker(aot_model, long_term_mem, max_len_long_term, sam_gap, max_obj_num, points_per_side, origin_frame):
-    print('Function Name :', inspect.stack()[0][3])
+    # print('Function Name :', inspect.stack()[0][3])
     if origin_frame is None:
         return None, origin_frame, [[], []], ""
 

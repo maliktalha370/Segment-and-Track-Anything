@@ -1,5 +1,5 @@
 import os
-import time
+import argparse
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 import schedule
@@ -71,17 +71,21 @@ class Segmenter_Tracker:
 
 
 class VideoDownloader:
-    def __init__(self, data_file_path):
-        self.data_file_path = os.path.join('gdrive', data_file_path)
+    def __init__(self,
+                 data_file_path,
+                 gdrive_folder = 'Tracking',
+                 grounding_caption = 'people',
+                 local_folder = 'gdrive'):
+        self.data_file_path = os.path.join(local_folder, data_file_path)
         self.drive = self.authenticate()
         self.segmenter_obj = Segmenter_Tracker()
-        self.video_directory = './gdrive/downloaded_videos'
-        self.gdrive_folder = "Tracking"
-        self.grounding_caption = 'people'
+        self.video_directory = os.path.join(local_folder, 'downloaded_videos')
+        self.gdrive_folder = gdrive_folder
+        self.grounding_caption = grounding_caption
 
 
         self.segtracker_args = {
-            'sam_gap': 5,  # the interval to run sam to segment new objects
+            'sam_gap': 50,  # the interval to run sam to segment new objects
             'min_area': 200,  # minimal mask area to add a new mask as a new object
             'max_obj_num': 255,  # maximal object number to track in a video
             'min_new_obj_iou': 0.8,  # the area of a new object in the background should > 80%
@@ -176,7 +180,7 @@ class VideoDownloader:
         output_video, output_mask, objs_list = tracking_objects(Seg_Tracker, io_args['input_video'], None, 0)
 
         print('Output Video:', output_video)
-        print('Object List:', objs_list)
+        # print('Object List:', objs_list)
 
 
     def check_for_new_videos(self, new_videos):
@@ -188,13 +192,24 @@ class VideoDownloader:
         new_videos = self.download_recent_videos()
         self.check_for_new_videos(new_videos)
 
-# Create an instance of VideoDownloader
-data_file_path = 'already_looked_files.txt'
-video_downloader = VideoDownloader(data_file_path)
+# Initialize parser
+parser = argparse.ArgumentParser()
+parser.add_argument("--file", default = 'already_looked_files',  help="Text file which saves previously done files")
+parser.add_argument("--gdrive", default = 'Tracking',  help="Google Drive Folder which contains new and old videos")
+parser.add_argument("--caption", default = 'people',  help="Caption for Grounding Dino to detect onyl specific subjects")
+parser.add_argument("--directory", default = './gdrive',  help="Local Folder to download Google Drive new files")
+
+# Read arguments from command line
+args = parser.parse_args()
+
+video_downloader = VideoDownloader(args['file'],
+                                   args['gdrive'],
+                                   args['caption'],
+                                   args['directory'])
 
 # Schedule the job to run every 1 hour
 schedule.every(1).minutes.do(video_downloader.job)
 
 while True:
     schedule.run_pending()
-    time.sleep(1)
+    # time.sleep(1)
