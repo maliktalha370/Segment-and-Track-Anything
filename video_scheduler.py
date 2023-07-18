@@ -202,10 +202,10 @@ parser.add_argument("--directory", default = './gdrive',  help="Local Folder to 
 # Read arguments from command line
 args = parser.parse_args()
 
-video_downloader = VideoDownloader(args['file'],
-                                   args['gdrive'],
-                                   args['caption'],
-                                   args['directory'])
+video_downloader = VideoDownloader(args.file,
+                                   args.gdrive,
+                                   args.caption,
+                                   args.directory)
 
 # Schedule the job to run every 1 hour
 schedule.every(1).minutes.do(video_downloader.job)
