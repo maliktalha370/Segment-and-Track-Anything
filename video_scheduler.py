@@ -114,7 +114,11 @@ class VideoDownloader:
     def authenticate(self):
         # Authenticate using client_secrets.json
         gauth = GoogleAuth()
-        gauth.LocalWebserverAuth()
+        # gauth.LocalWebserverAuth()
+        scope = ['https://www.googleapis.com/auth/drive']
+        from oauth2client.service_account import ServiceAccountCredentials
+        gauth.credentials = ServiceAccountCredentials.from_json_keyfile_name('genuine-park-393209-c6843b80e8d2.json', scope)
+
         drive = GoogleDrive(gauth)
 
         return drive
@@ -123,7 +127,7 @@ class VideoDownloader:
         folder_id = ''
 
         # 2) Retrieve the folder id - start searching from root
-        file_list = self.drive.ListFile({'q': "'root' in parents and trashed=false"}).GetList()
+        file_list = self.drive.ListFile().GetList()
         for file in file_list:
             if file['title'] == self.gdrive_folder:
                 folder_id = file['id']
@@ -180,7 +184,7 @@ class VideoDownloader:
         output_video, output_mask, objs_list = tracking_objects(Seg_Tracker, io_args['input_video'], None, 0)
 
         print('Output Video:', output_video)
-        # print('Object List:', objs_list)
+        print('Object List:', objs_list)
 
 
     def check_for_new_videos(self, new_videos):
@@ -190,11 +194,12 @@ class VideoDownloader:
     def job(self):
         print("Scanning for recent videos...")
         new_videos = self.download_recent_videos()
+        print('New Videos ', new_videos)
         self.check_for_new_videos(new_videos)
 
 # Initialize parser
 parser = argparse.ArgumentParser()
-parser.add_argument("--file", default = 'already_looked_files',  help="Text file which saves previously done files")
+parser.add_argument("--file", default = 'already_looked_files.txt',  help="Text file which saves previously done files")
 parser.add_argument("--gdrive", default = 'Tracking',  help="Google Drive Folder which contains new and old videos")
 parser.add_argument("--caption", default = 'people',  help="Caption for Grounding Dino to detect onyl specific subjects")
 parser.add_argument("--directory", default = './gdrive',  help="Local Folder to download Google Drive new files")
