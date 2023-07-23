@@ -1,5 +1,19 @@
 import os
 import subprocess
+def install_grounding_dino():
+    git_url = "https://github.com/IDEA-Research/GroundingDINO.git"
+    package_name = "GroundingDINO"
+
+    # Prepare the command to install the package in editable mode
+    install_cmd = f"pip install -e git+{git_url}@main#egg={package_name}"
+
+    # Execute the command using subprocess
+    try:
+        subprocess.check_call(install_cmd, shell=True)
+        print(f"{package_name} installed successfully.")
+    except subprocess.CalledProcessError:
+        print(f"Failed to install {package_name}.")
+install_grounding_dino()
 import argparse
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
@@ -17,19 +31,7 @@ from app import (
     tracking_objects
 )
 
-def install_grounding_dino():
-    git_url = "https://github.com/IDEA-Research/GroundingDINO.git"
-    package_name = "GroundingDINO"
 
-    # Prepare the command to install the package in editable mode
-    install_cmd = f"pip install -e git+{git_url}@main#egg={package_name}"
-
-    # Execute the command using subprocess
-    try:
-        subprocess.check_call(install_cmd, shell=True)
-        print(f"{package_name} installed successfully.")
-    except subprocess.CalledProcessError:
-        print(f"Failed to install {package_name}.")
 class Segmenter_Tracker:
     def __int__(self):
         pass
@@ -221,7 +223,6 @@ parser.add_argument("--directory", default = './gdrive',  help="Local Folder to 
 
 # Read arguments from command line
 args = parser.parse_args()
-install_grounding_dino()
 
 video_downloader = VideoDownloader(args.file,
                                    args.gdrive,
