@@ -1,7 +1,11 @@
 # Use the base image
 FROM pytorch/pytorch:2.0.1-cuda11.7-cudnn8-devel
 ARG DEBIAN_FRONTEND=noninteractive
+# Set the CUDA_HOME environment variable
+ENV CUDA_HOME /usr/local/cuda
 
+# Add CUDA bin directory to the PATH environment variable
+ENV PATH $PATH:/usr/local/cuda/bin
 
 # Install necessary packages
 RUN apt-get update && apt-get install -y ffmpeg libsm6 libxext6 nano git wget
@@ -10,9 +14,9 @@ RUN apt-get update && apt-get install -y ffmpeg libsm6 libxext6 nano git wget
 RUN git clone https://github.com/maliktalha370/Segment-and-Track-Anything.git
 
 # Install sam package
-WORKDIR ./Segment-and-Track-Anything/sam/
+WORKDIR /workspace/Segment-and-Track-Anything/sam/
 RUN pip install -e .
-WORKDIR /Segment-and-Track-Anything/
+WORKDIR /workspace/Segment-and-Track-Anything/
 
 # Install GroundingDINO package
 RUN pip install -e git+https://github.com/IDEA-Research/GroundingDINO.git@main#egg=GroundingDINO
@@ -22,12 +26,14 @@ RUN pip install numpy opencv-python pycocotools matplotlib Pillow scikit-image g
 
 # Install Pytorch Correlation
 RUN git clone https://github.com/ClementPinard/Pytorch-Correlation-extension.git
-WORKDIR ./Pytorch-Correlation-extension
+WORKDIR /workspace/Segment-and-Track-Anything/Pytorch-Correlation-extension
+ARG TORCH_CUDA_ARCH_LIST="6.0"
 RUN python setup.py install
-WORKDIR /Segment-and-Track-Anything
+WORKDIR /workspace/Segment-and-Track-Anything
 
-# Remove existing 'ckpt' directory and create a new one
-RUN rm -r ./ckpt
+# Add a check to see if the ./ckpt directory exists before attempting to remove it
+RUN if [ -d "./ckpt" ]; then rm -r ./ckpt; fi
+
 RUN mkdir ./ckpt
 
 
@@ -44,7 +50,6 @@ RUN wget -P ./ckpt https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01e
 RUN wget -P ./ckpt https://huggingface.co/ShilongLiu/GroundingDINO/resolve/main/groundingdino_swint_ogc.pth
 
 # Copy the Python script
-WORKDIR /Segment-and-Track-Anything
-
+WORKDIR /workspace/Segment-and-Track-Anything
 # Run the Python script
 CMD python video_scheduler.py
