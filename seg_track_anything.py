@@ -193,7 +193,7 @@ def video_type_input_tracking(SegTracker, input_video, io_args, video_name, fram
         print("{} saved".format(io_args['output_gif']))
 
         # zip predicted mask
-        os.system(f"zip -r {io_args['tracking_result_dir']}/{video_name}_pred_mask.zip {io_args['output_mask_dir']}")
+        # os.system(f"zip -r {io_args['tracking_result_dir']}/{video_name}_pred_mask.zip {io_args['output_mask_dir']}")
 
         # manually release memory (after cuda out of memory)
         obj_list = SegTracker.reference_objs_list
