@@ -171,7 +171,7 @@ def video_type_input_tracking(SegTracker, input_video, io_args, video_name, fram
             masked_pred_list.append(masked_frame)
             masked_frame = cv2.cvtColor(masked_frame, cv2.COLOR_RGB2BGR)
             out.write(masked_frame)
-            print('frame {} writed'.format(frame_idx), end='\r')
+            # print('frame {} writed'.format(frame_idx), end='\r')
             frame_idx += 1
 
             torch.cuda.empty_cache()
@@ -302,7 +302,7 @@ def img_seq_type_input_tracking(SegTracker, io_args, video_name, imgs_path, fps,
 
         masked_frame = cv2.cvtColor(masked_frame,cv2.COLOR_RGB2BGR)
         out.write(masked_frame)
-        print('frame {} writed'.format(frame_name),end='\r')
+        # print('frame {} writed'.format(frame_name),end='\r')
         frame_idx += 1
     out.release()
     print("\n{} saved".format(io_args['output_video']))

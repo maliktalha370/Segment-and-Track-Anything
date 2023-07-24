@@ -1,4 +1,5 @@
 import os
+import sqlite3
 import argparse
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
@@ -75,17 +76,19 @@ class VideoDownloader:
                  data_file_path,
                  gdrive_folder = 'Tracking',
                  grounding_caption = 'people',
-                 local_folder = 'gdrive'):
+                 local_folder = 'gdrive',
+                 database = 'SegTracker.db'):
         self.data_file_path = os.path.join(local_folder, data_file_path)
         self.drive = self.authenticate()
         self.segmenter_obj = Segmenter_Tracker()
         self.video_directory = os.path.join(local_folder, 'downloaded_videos')
         self.gdrive_folder = gdrive_folder
         self.grounding_caption = grounding_caption
+        self.database = database
 
 
         self.segtracker_args = {
-            'sam_gap': 50,  # the interval to run sam to segment new objects
+            'sam_gap': 1000,  # the interval to run sam to segment new objects
             'min_area': 200,  # minimal mask area to add a new mask as a new object
             'max_obj_num': 255,  # maximal object number to track in a video
             'min_new_obj_iou': 0.8,  # the area of a new object in the background should > 80%
@@ -182,14 +185,34 @@ class VideoDownloader:
                                                            self.sam_gap, self.max_obj_num,
                                                            self.points_per_side)
         output_video, output_mask, objs_list = tracking_objects(Seg_Tracker, io_args['input_video'], None, 0)
-
-        print('Output Video:', output_video)
-        print('Object List:', objs_list)
+        return output_video, objs_list[-1]
 
 
     def check_for_new_videos(self, new_videos):
         for new_video in new_videos:
-            self.run_process(new_video.split('.')[0])
+            output_video, objs_list = self.run_process(new_video.split('.')[0])
+            print('Output Video:', output_video)
+            print('Object List:', objs_list)
+
+            # Connect to the SQLite database
+            conn = sqlite3.connect(self.database)
+            cursor = conn.cursor()
+
+            # Create the videos table if it doesn't exist
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS videos (
+                    video_name TEXT,
+                    metadata TEXT
+                )
+            ''')
+            # Insert video information into the database
+            cursor.execute('''
+                INSERT INTO videos (video_name, metadata) VALUES (?, ?)
+            ''', (new_video.split('.'), objs_list))
+            # Commit the changes to the database
+            conn.commit()
+            # Close the database connection
+            conn.close()
 
     def job(self):
         print("Scanning for recent videos...")
@@ -203,17 +226,21 @@ parser.add_argument("--file", default = 'already_looked_files.txt',  help="Text 
 parser.add_argument("--gdrive", default = 'Tracking',  help="Google Drive Folder which contains new and old videos")
 parser.add_argument("--caption", default = 'people',  help="Caption for Grounding Dino to detect onyl specific subjects")
 parser.add_argument("--directory", default = './gdrive',  help="Local Folder to download Google Drive new files")
-
+parser.add_argument("--database", default = 'SegTracking.db',  help="Local Database")
 # Read arguments from command line
 args = parser.parse_args()
 
 video_downloader = VideoDownloader(args.file,
                                    args.gdrive,
                                    args.caption,
-                                   args.directory)
+                                   args.directory,
+                                   args.database)
 
 # Schedule the job to run every 1 hour
 schedule.every(1).minutes.do(video_downloader.job)
+
+# Connect to the SQLite database
+
 
 while True:
     schedule.run_pending()
