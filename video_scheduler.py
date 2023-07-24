@@ -190,7 +190,9 @@ class VideoDownloader:
 
     def check_for_new_videos(self, new_videos):
         for new_video in new_videos:
-            output_video, objs_list = self.run_process(new_video.split('.')[0])
+            video_name = new_video.split('.')[0]
+            output_video, objs_list = self.run_process(video_name)
+
             print('Output Video:', output_video)
             print('Object List:', objs_list)
 
@@ -208,7 +210,7 @@ class VideoDownloader:
             # Insert video information into the database
             cursor.execute('''
                 INSERT INTO videos (video_name, metadata) VALUES (?, ?)
-            ''', (new_video.split('.'), objs_list))
+            ''', (video_name, objs_list))
             # Commit the changes to the database
             conn.commit()
             # Close the database connection
