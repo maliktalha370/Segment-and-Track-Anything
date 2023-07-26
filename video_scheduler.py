@@ -60,13 +60,12 @@ class Segmenter_Tracker:
             Seg_Tracker, _, _, _ = init_SegTracker(aot_model, long_term_mem, max_len_long_term, sam_gap, max_obj_num,
                                                    points_per_side, origin_frame)
 
-        print("Detect")
         predicted_mask, annotated_frame = Seg_Tracker.detect_and_seg(origin_frame, grounding_caption, box_threshold,
                                                                      text_threshold)
 
         Seg_Tracker = SegTracker_add_first_frame(Seg_Tracker, origin_frame, predicted_mask)
 
-        masked_frame = self.draw_mask(annotated_frame, predicted_mask)
+        masked_frame = self.draw_mask(annotated_frame, predicted_mask, id_countour=True)
 
         return Seg_Tracker, masked_frame, origin_frame
 

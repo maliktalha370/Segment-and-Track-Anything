@@ -50,7 +50,7 @@ def get_meta_from_video(input_video):
     if input_video is None:
         return None, None, None, ""
 
-    print("get meta information of input video")
+    print("Getting Metadata of input video !!")
     cap = cv2.VideoCapture(input_video)
 
     _, first_frame = cap.read()
