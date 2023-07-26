@@ -27,7 +27,7 @@ class Segmenter_Tracker:
         save_mask = save_mask.convert(mode='RGB')
         return np.array(save_mask)
 
-    def draw_mask(self, img, mask, alpha=0.5, id_countour=False):
+    def draw_mask(self, img, mask, alpha=0.5, id_countour=True):
         img_mask = np.copy(img)
         if id_countour:
             obj_ids = np.unique(mask)
@@ -210,7 +210,7 @@ class VideoDownloader:
             # Insert video information into the database
             cursor.execute('''
                 INSERT INTO videos (video_name, metadata) VALUES (?, ?)
-            ''', (video_name, objs_list))
+            ''', (video_name, str(objs_list)))
             # Commit the changes to the database
             conn.commit()
             # Close the database connection
