@@ -143,6 +143,7 @@ class VideoDownloader:
         new_videos = []
         if recent_videos:
             for video in recent_videos:
+                video['title'] = video['title'].replace(' ', '_')
                 file_path = os.path.join(self.video_directory, video['title'])
                 if self.check_text_file(video['title']):
                     video.GetContentFile(file_path)
