@@ -181,7 +181,7 @@ def video_type_input_tracking(SegTracker, input_video, io_args, video_name, fram
             save_prediction(pred_mask, output_mask_dir, str(frame_idx + frame_num).zfill(5) + '.png')
             pred_list.append(pred_mask)
 
-            print("processed frame {}, obj_num {}".format(frame_idx + frame_num, SegTracker.get_obj_num()),end='\r')
+            print("processed frame {}".format(frame_idx + frame_num),end='\r')
             frame_idx += 1
         cap.release()
         out.release()
@@ -271,7 +271,7 @@ def img_seq_type_input_tracking(SegTracker, io_args, video_name, imgs_path, fps,
             save_prediction(pred_mask, output_mask_dir, f'{frame_name}.png')
             pred_list.append(pred_mask)
 
-            print("processed frame {}, obj_num {}".format(frame_idx+frame_num, SegTracker.get_obj_num()),end='\r')
+            print("processed frame {}".format(frame_idx+frame_num),end='\r')
             frame_idx += 1
         print('\nfinished')
     

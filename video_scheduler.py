@@ -125,6 +125,24 @@ class VideoDownloader:
 
         return drive
 
+    def upload_recent_video(self, file_path):
+
+        if os.path.exists(file_path):
+            file_name = os.path.basename(file_path)
+            file_metadata = {'title': file_name.split('.')[0] + '_processed.mp4',
+                             'parents': [{'id': '1QGWEGrjt9KPSfCr_eYzYDwYbFS_C8aTB'}]}
+
+            try:
+                file = self.drive.CreateFile(file_metadata)
+                file.SetContentFile(file_path)
+                file.Upload()
+                print(f"Uploaded file: {file_name.split('.')[0] + '_processed.mp4'}")
+            except Exception as e:
+                print(f"Error uploading file: {file_name}, Reason: {e}")
+        else:
+            print(f"File not found: {file_path}")
+
+
     def download_recent_videos(self):
         folder_id = ''
 
@@ -143,12 +161,13 @@ class VideoDownloader:
         new_videos = []
         if recent_videos:
             for video in recent_videos:
-                video['title'] = video['title'].replace(' ', '_')
-                file_path = os.path.join(self.video_directory, video['title'])
-                if self.check_text_file(video['title']):
-                    video.GetContentFile(file_path)
-                    new_videos.append(video['title'])
-                    print(f"Downloaded video: {video['title']}")
+                if 'fileExtension' in list(video.keys()):
+                    video['title'] = video['title'].replace(' ', '_')
+                    file_path = os.path.join(self.video_directory, video['title'])
+                    if self.check_text_file(video['title']):
+                        video.GetContentFile(file_path)
+                        new_videos.append(video['title'])
+                        print(f"Downloaded video: {video['title']}")
         return new_videos
     def check_text_file(self, file):
         if not os.path.exists(self.data_file_path):
@@ -195,7 +214,7 @@ class VideoDownloader:
 
             print('Output Video:', output_video)
             print('Object List:', objs_list)
-
+            self.upload_recent_video(output_video)
             # Connect to the SQLite database
             conn = sqlite3.connect(self.database)
             cursor = conn.cursor()
