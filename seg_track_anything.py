@@ -189,8 +189,8 @@ def video_type_input_tracking(SegTracker, input_video, io_args, video_name, fram
         print('\nfinished')
 
         # save colorized masks as a gif
-        imageio.mimsave(io_args['output_gif'], masked_pred_list, duration=100* (1 / fps))
-        print("{} saved".format(io_args['output_gif']))
+        # imageio.mimsave(io_args['output_gif'], masked_pred_list, duration=100* (1 / fps))
+        # print("{} saved".format(io_args['output_gif']))
 
         # zip predicted mask
         # os.system(f"zip -r {io_args['tracking_result_dir']}/{video_name}_pred_mask.zip {io_args['output_mask_dir']}")
